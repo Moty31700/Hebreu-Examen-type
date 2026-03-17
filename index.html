@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="he-FR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>מבחן סוף סמסטר A1 — Jeu interactif</title>
+  <!-- PWA -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="עברית A1">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="theme-color" content="#9a7a2a">
+  <!-- iOS safe area -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Hebrew:wght@400;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --p:#f5ead6;--pd:#e8d5b0;--ink:#2c1a0e;--inkl:#5c3d1e;
+  --gold:#9a7a2a;--goldl:#c9a84c;--red:#8b2020;--bord:#b8905a;
+  --green:#2a5c1e;--gbg:#e8f5e3;
+}
+body{background:#2c1a0e;font-family:'Crimson Pro',serif;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:2rem 1rem}
+.shell{background:var(--p);border:2px solid var(--bord);border-radius:8px;padding:2rem;max-width:860px;width:100%;position:relative}
+.shell::before{content:'';position:absolute;inset:5px;border:1px solid var(--gold);border-radius:6px;pointer-events:none;opacity:.4}
+
+/* HEADER */
+.title{text-align:center;font-family:'Noto Serif Hebrew',serif;font-size:26px;color:var(--ink);direction:rtl;margin-bottom:4px}
+.subtitle{text-align:center;font-size:14px;color:var(--inkl);font-style:italic;margin-bottom:1.5rem}
+
+/* NAV MODULES */
+.modules{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.5rem}
+@media(max-width:560px){.modules{grid-template-columns:repeat(2,1fr)}}
+.mbtn{background:var(--pd);border:1.5px solid var(--bord);border-radius:6px;padding:8px 4px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:12px;color:var(--ink);text-align:center;transition:.15s;line-height:1.4}
+.mbtn:hover{background:#dfc99a;border-color:var(--gold)}
+.mbtn.active{background:var(--ink);color:var(--p);border-color:var(--ink)}
+.mbtn .mn{font-size:18px;display:block;margin-bottom:3px}
+
+/* SCORE BAR */
+.sbar{display:flex;justify-content:center;gap:2.5rem;margin-bottom:1rem;background:var(--pd);border:1px solid var(--bord);border-radius:6px;padding:8px 2rem}
+.si{text-align:center}
+.sn{font-size:22px;font-weight:600;color:var(--ink)}
+.sl{font-size:11px;color:var(--inkl);text-transform:uppercase;letter-spacing:.05em}
+.pbar{height:4px;background:var(--pd);border-radius:2px;margin-bottom:1rem;overflow:hidden}
+.pfill{height:100%;background:var(--gold);border-radius:2px;transition:width .4s}
+
+/* CARD */
+.card{background:#fffdf6;border:1px solid var(--bord);border-radius:6px;padding:1.5rem;margin-bottom:1rem}
+.stag{display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);border:1px solid var(--goldl);border-radius:3px;padding:2px 8px;margin-bottom:10px}
+.heb{font-family:'Noto Serif Hebrew',serif;direction:rtl;font-size:20px;color:var(--ink);line-height:1.8;text-align:right;margin:6px 0}
+.heb-q{font-family:'Noto Serif Hebrew',serif;direction:rtl;font-size:18px;color:var(--ink);line-height:2;text-align:right}
+.fr{font-size:14px;color:var(--inkl);font-style:italic;margin:4px 0}
+.qtxt{font-size:16px;color:var(--ink);font-weight:600;margin:10px 0 12px;line-height:1.5}
+
+/* INPUT */
+.inp-wrap{display:flex;align-items:center;gap:8px;margin:6px 0;flex-wrap:wrap}
+.inp-label{font-family:'Noto Serif Hebrew',serif;font-size:17px;color:var(--ink);direction:rtl;min-width:220px;text-align:right}
+input[type=text].heb-in{
+  font-family:'Noto Serif Hebrew',serif;
+  direction:rtl;font-size:17px;
+  background:var(--p);border:1.5px solid var(--bord);border-radius:5px;
+  padding:6px 10px;color:var(--ink);outline:none;min-width:160px;
+  transition:border-color .15s;
+}
+input[type=text].heb-in:focus{border-color:var(--gold)}
+input[type=text].heb-in.hi-wrong{background:#fff3b0;border-color:#c9a800}
+input[type=text].heb-in.hi-correct{background:var(--gbg);border-color:var(--green)}
+input[type=text].heb-in.hi-final-wrong{background:#fce8e8;border-color:var(--red)}
+input[type=text].heb-in.retry-ok{background:#fffbe6;border-color:var(--gold)}
+
+/* TABLE */
+.conj-table{width:100%;border-collapse:collapse;margin:10px 0;font-family:'Noto Serif Hebrew',serif;direction:rtl;font-size:15px}
+.conj-table th{background:var(--pd);color:var(--ink);padding:6px 10px;border:1px solid var(--bord);font-size:13px;text-align:center}
+.conj-table td{padding:6px 10px;border:1px solid var(--bord);text-align:center;color:var(--ink)}
+.conj-table td input[type=text].heb-in{width:100%;min-width:80px}
+.conj-table tr:nth-child(even) td{background:#faf7ee}
+
+/* BUTTONS */
+.btn{border:none;border-radius:6px;padding:9px 22px;font-family:'Crimson Pro',serif;font-size:15px;cursor:pointer;transition:.15s;margin:4px 4px 4px 0}
+.btn-gold{background:var(--gold);color:#fff}.btn-gold:hover{background:var(--goldl)}
+.btn-ink{background:var(--ink);color:var(--p)}.btn-ink:hover{background:var(--inkl)}
+.btn-out{background:transparent;color:var(--ink);border:1.5px solid var(--bord)}.btn-out:hover{background:var(--pd)}
+.btn-home{background:#5c3d1e;color:var(--p)}.btn-home:hover{background:#3a2510}
+
+/* FEEDBACK */
+.fb{margin-top:12px;padding:10px 14px;border-radius:6px;font-size:14px;line-height:1.6;display:none}
+.fb.ok{background:var(--gbg);border-left:4px solid var(--green);color:#1a3d10;display:block}
+.fb.err{background:#fce8e8;border-left:4px solid var(--red);color:var(--red);display:block}
+.fb.warn{background:#fff8e0;border-left:4px solid var(--gold);color:#5a3d00;display:block}
+
+/* SCORE TAG inline */
+.pts{font-size:12px;color:var(--gold);border:1px solid var(--goldl);border-radius:3px;padding:1px 7px;margin-left:8px;vertical-align:middle}
+
+/* END */
+.end{text-align:center;padding:2.5rem 1rem;display:none}
+.end.visible{display:block}
+.end-icon{font-size:52px;margin-bottom:1rem}
+.end-msg{font-size:22px;font-weight:600;color:var(--ink);margin-bottom:.4rem}
+.end-sub{font-size:15px;color:var(--inkl);font-style:italic;margin-bottom:.8rem}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-width:380px;margin:1rem auto 1.5rem;font-size:14px;text-align:left}
+.score-row{background:var(--pd);border:1px solid var(--bord);border-radius:5px;padding:6px 12px;color:var(--ink)}
+
+/* HOME */
+#home{padding-bottom:.5rem}
+.home-title{font-family:'Noto Serif Hebrew',serif;font-size:28px;color:var(--ink);direction:rtl;text-align:center;margin-bottom:.3rem}
+.home-sub{text-align:center;font-size:14px;color:var(--inkl);font-style:italic;margin-bottom:1.5rem}
+.home-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:1.5rem}
+@media(max-width:500px){.home-grid{grid-template-columns:1fr}}
+.home-card{background:var(--pd);border:1.5px solid var(--bord);border-radius:8px;padding:1rem;cursor:pointer;transition:.15s}
+.home-card:hover{background:#dfc99a;border-color:var(--gold)}
+.home-card .hc-icon{font-size:26px;margin-bottom:4px}
+.home-card .hc-title{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:2px}
+.home-card .hc-pts{font-size:12px;color:var(--inkl);font-style:italic}
+.home-start{display:block;margin:0 auto;padding:11px 40px}
+
+/* TEXT AREA for partie 7 */
+textarea.heb-area{
+  font-family:'Noto Serif Hebrew',serif;direction:rtl;
+  font-size:16px;width:100%;min-height:140px;
+  background:var(--p);border:1.5px solid var(--bord);border-radius:5px;
+  padding:10px;color:var(--ink);resize:vertical;outline:none;
+  transition:border-color .15s;line-height:1.8;
+}
+textarea.heb-area:focus{border-color:var(--gold)}
+
+  /* PWA / Mobile */
+  body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+  .shell { -webkit-tap-highlight-color: transparent; }
+  input[type=text].heb-in, textarea.heb-area { -webkit-appearance: none; font-size: 16px !important; }
+  /* Prevent double-tap zoom on buttons */
+  .btn, .mbtn, .home-card { touch-action: manipulation; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div id="home">
+    <div class="title">מבחן סוף סמסטר 2024</div>
+    <div class="subtitle">Examen fin de semestre — Niveau A1 | 20 points</div>
+    <div class="home-grid" id="home-grid"></div>
+    <button class="btn btn-gold home-start" onclick="startAll()">▶ Commencer l'examen complet</button>
+  </div>
+
+  <div id="exam" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
+      <div class="stag" id="part-label"></div>
+      <button class="btn btn-home" onclick="goHome()">⌂ Accueil</button>
+    </div>
+    <div class="pbar"><div class="pfill" id="pfill" style="width:0%"></div></div>
+    <div class="sbar">
+      <div class="si"><div class="sn" id="s-correct">0</div><div class="sl">Justes</div></div>
+      <div class="si"><div class="sn" id="s-errors">0</div><div class="sl">Erreurs</div></div>
+      <div class="si"><div class="sn" id="s-pts">0</div><div class="sl">Points</div></div>
+    </div>
+    <div id="part-area"></div>
+    <div id="fb-global" class="fb"></div>
+    <div style="margin-top:14px">
+      <button class="btn btn-gold" id="btn-check" onclick="checkStep()">✓ Corriger</button>
+      <button class="btn btn-ink" id="btn-next" onclick="nextPart()" style="display:none">Partie suivante →</button>
+      <button class="btn btn-out" onclick="goHome()">⌂ Retour accueil</button>
+    </div>
+  </div>
+
+  <div class="end" id="end">
+    <div class="end-icon">📜</div>
+    <div class="end-msg" id="end-msg"></div>
+    <div class="end-sub" id="end-sub"></div>
+    <div class="score-grid" id="score-detail"></div>
+    <button class="btn btn-gold" onclick="startAll()">↺ Recommencer</button>
+    <button class="btn btn-home" onclick="goHome()">⌂ Accueil</button>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────
+
+var PARTS = [
+{
+  id:1, title:'Partie 1 — Pronoms', icon:'🔤', pts:3,
+  fr:'Complétez le pronom manquant',
+  type:'fill',
+  items:[
+    { pre:'מִי אַתָּה? — ', blank:true, suf:' דָּנִי.', ans:'אֲנִי' },
+    { pre:'הִיא שָׂרָה? — לֹא, ', blank:true, suf:' לֵאָה.', ans:'הִיא' },
+    { pre:'אַתֶּם מֵרוּסְיָה? — לֹא ', blank:true, suf:' מֵאוּקְרַאיְנָה.', ans:'אֲנַחְנוּ' },
+    { pre:'מָה הוּא לוֹמֵד? — ', blank:true, suf:' לוֹמֵד עַרְבִית.', ans:'הוּא' },
+    { pre:'', blank:true, suf:' תַּלְמִיד? — כֵּן, אֲנִי תַּלְמִיד.', ans:'אַתָּה' },
+    { pre:'הֵן לוֹמְדוֹת הִיסְטוֹרְיָה? — כֵּן, ', blank:true, suf:' לוֹמְדוֹת הִיסְטוֹרְיָה.', ans:'הֵן' },
+    { pre:'', blank:true, suf:' רוֹצֶה מִיץ? — לֹא, הוּא רוֹצֶה קוֹקָה קוֹלָה.', ans:'הוּא' },
+    { pre:'', blank:true, suf:' מוֹרָה? — לֹא, אֲנִי תַּלְמִידָה.', ans:'אַתְּ' },
+    { pre:'', blank:true, suf:' הַיְלָדוֹת שֶׁל יוֹסֵף? — כֵּן, אֲנַחְנוּ הַיְלָדוֹת שֶׁל יוֹסֵף וּמִרְיָם.', ans:'אַתֶּן' },
+    { pre:'אֵיפֹה הֵם גָּרִים? — ', blank:true, suf:' גָּרִים בְּמָרוֹקוֹ.', ans:'הֵם' },
+  ]
+},
+{
+  id:2, title:'Partie 2 — Verbes', icon:'✍️', pts:3,
+  fr:'Complétez le tableau de conjugaison',
+  type:'table',
+  cols:['יָחִיד S.M','יְחִידָה S.F','רַבִּים P.M','רַבּוֹת P.F','תרגום'],
+  rows:[
+    { given:{0:'גָּר',1:'גָּרָה',2:'גָּרִים',3:'גָּרוֹת',4:'habiter'}, fixed:[0,1,2,3,4] },
+    { given:{0:'שָׁר',4:'chanter'}, fixed:[0,4], ans:{1:'שָׁרָה',2:'שָׁרִים',3:'שָׁרוֹת'} },
+    { given:{1:'לוֹמֶדֶת',4:'étudier'}, fixed:[1,4], ans:{0:'לוֹמֵד',2:'לוֹמְדִים',3:'לוֹמְדוֹת'} },
+    { given:{2:'קוֹרְאִים',4:'lire'}, fixed:[2,4], ans:{0:'קוֹרֵא',1:'קוֹרֵאת',3:'קוֹרְאוֹת'} },
+    { given:{3:'אוֹהֲבוֹת',4:'aimer'}, fixed:[3,4], ans:{0:'אוֹהֵב',1:'אוֹהֶבֶת',2:'אוֹהֲבִים'} },
+    { given:{0:'כּוֹתֵב',4:'écrire'}, fixed:[0,4], ans:{1:'כּוֹתֶבֶת',2:'כּוֹתְבִים',3:'כּוֹתְבוֹת'} },
+    { given:{1:'הוֹלֶכֶת',4:'aller'}, fixed:[1,4], ans:{0:'הוֹלֵךְ',2:'הוֹלְכִים',3:'הוֹלְכוֹת'} },
+    { given:{2:'רוֹצִים',4:'vouloir'}, fixed:[2,4], ans:{0:'רוֹצֶה',1:'רוֹצָה',3:'רוֹצוֹת'} },
+    { given:{3:'שׁוֹתוֹת',4:'boire'}, fixed:[3,4], ans:{0:'שׁוֹתֶה',1:'שׁוֹתָה',2:'שׁוֹתִים'} },
+    { given:{0:'עוֹשֶׂה',4:'faire'}, fixed:[0,4], ans:{1:'עוֹשָׂה',2:'עוֹשִׂים',3:'עוֹשׂוֹת'} },
+    { given:{1:'מְדַבֶּרֶת',4:'parler'}, fixed:[1,4], ans:{0:'מְדַבֵּר',2:'מְדַבְּרִים',3:'מְדַבְּרוֹת'} },
+  ]
+},
+{
+  id:3, title:'Partie 3 — Présentatifs', icon:'👉', pts:2,
+  fr:'Complétez avec זֶה / זֹאת / אֵלֶּה',
+  type:'fill',
+  hint:'זֶה (masc. sing.) · זֹאת (fém. sing.) · אֵלֶּה (pluriel)',
+  items:[
+    { pre:'', blank:true, suf:' תַּלְמִיד.', ans:'זֶה', tip:'תַּלְמִיד = masc. sing.' },
+    { pre:'', blank:true, suf:' בָּנָנָה.', ans:'זֹאת', tip:'בָּנָנָה = fém. sing.' },
+    { pre:'', blank:true, suf:' גְּלִידָה.', ans:'זֹאת', tip:'גְּלִידָה = fém. sing.' },
+    { pre:'', blank:true, suf:' לִימוֹן.', ans:'זֶה', tip:'לִימוֹן = masc. sing.' },
+    { pre:'', blank:true, suf:' מַתָּנוֹת.', ans:'אֵלֶּה', tip:'מַתָּנוֹת = pluriel' },
+    { pre:'', blank:true, suf:' לֶחֶם וְ', blank2:true, suf2:' חַלָּה.', ans:'זֶה', ans2:'זֹאת', tip:'לֶחֶם masc. · חַלָּה fém.' },
+    { pre:'', blank:true, suf:' יְלָדוֹת.', ans:'אֵלֶּה', tip:'יְלָדוֹת = pluriel' },
+    { pre:'', blank:true, suf:' אַבָּא.', ans:'זֶה', tip:'אַבָּא = masc. sing.' },
+    { pre:'', blank:true, suf:' יָם.', ans:'זֶה', tip:'יָם = masc. sing.' },
+    { pre:'', blank:true, suf:' תַּלְמִידִים.', ans:'אֵלֶּה', tip:'תַּלְמִידִים = pluriel' },
+  ]
+},
+{
+  id:4, title:'Partie 4 — Chiffres', icon:'🔢', pts:2,
+  fr:'Écrivez le chiffre en notation numérique',
+  type:'numbers',
+  items:[
+    { heb:'שֶׁבַע', ans:'7' },
+    { heb:'שָׁלוֹשׁ', ans:'3' },
+    { heb:'אַרְבַּע', ans:'4' },
+    { heb:'חָמֵשׁ', ans:'5' },
+    { heb:'תֵּשַׁע', ans:'9' },
+    { heb:'שְׁתַּיִם', ans:'2' },
+    { heb:'עֶשֶׂר', ans:'10' },
+    { heb:'שְׁמוֹנֶה', ans:'8' },
+    { heb:'אַחַת', ans:'1' },
+    { heb:'שֵׁשׁ', ans:'6' },
+  ]
+},
+{
+  id:5, title:'Partie 5 — Singulier / Pluriel', icon:'⇌', pts:2,
+  fr:'Transformez du singulier au pluriel ou du pluriel au singulier',
+  type:'fill',
+  items:[
+    { pre:'תַּלְמִיד → ', blank:true, suf:'', ans:'תַּלְמִידִים', tip:'masc. → pluriel masc.' },
+    { pre:'סְפָרִים → ', blank:true, suf:'', ans:'סֵפֶר', tip:'pluriel masc. → singulier' },
+    { pre:'מַתָּנָה → ', blank:true, suf:'', ans:'מַתָּנוֹת', tip:'fém. → pluriel fém.' },
+    { pre:'מַחְשֵׁב → ', blank:true, suf:'', ans:'מַחְשְׁבִים', tip:'masc. → pluriel masc.' },
+    { pre:'יַלְדָּה → ', blank:true, suf:'', ans:'יְלָדוֹת', tip:'fém. → pluriel fém.' },
+  ]
+},
+{
+  id:6, title:'Partie 6 — Compréhension', icon:'📖', pts:4,
+  fr:'Lisez le texte et répondez aux questions',
+  type:'reading',
+  text:'שָׁלוֹם, אֲנִי יוֹסִי. אֲנִי מִסְּפָרַד וַאֲנִי גָּר בְּמַדְרִיד. אֲנִי לוֹמֵד בָּאוּנִיבֶרְסִיטָה פּוֹלִיטִיקָה וְהִיסְטוֹרְיָה. אֲנִי גַּם לוֹמֵד אַנְגְּלִית וְעַרְבִית. אֲנִי מְדַבֵּר סְפָרַדִּית וּקְצַת צָרְפָתִית. בָּאוּנִיבֶרְסִיטָה יֵשׁ סְטוּדֶנְטִים מִכָּל הָעוֹלָם. בְּמַדְרִיד יֵשׁ מוּזֵאוֹנִים וּמִסְעָדוֹת אֲבָל אֵין יָם. אֲנִי אוֹהֵב מוּזִיקָה וַאֲנִי שׁוֹתֶה קָפֶה עִם עוּגָה.',
+  items:[
+    { q:'אֵיפֹה יוֹסִי גָּר?', ans:'בְּמַדְרִיד', tip:'Il habite à Madrid.' },
+    { q:'מֵאַיִן יוֹסִי?', ans:'מִסְּפָרַד', tip:'Il est d\'Espagne.' },
+    { q:'מָה יוֹסִי לוֹמֵד?', ans:'פּוֹלִיטִיקָה וְהִיסְטוֹרְיָה', tip:'Politique et histoire.' },
+    { q:'מָה יוֹסִי שׁוֹתֶה?', ans:'קָפֶה', tip:'Il boit du café.' },
+    { q:'מָה יֵשׁ בְּמַדְרִיד?', ans:'מוּזֵאוֹנִים וּמִסְעָדוֹת', tip:'Musées et restaurants.' },
+    { q:'יוֹסִי מְדַבֵּר צָרְפָתִית?', ans:'קְצַת', tip:'Il parle un peu le français.' },
+    { q:'מָה יוֹסִי אוֹהֵב?', ans:'מוּזִיקָה', tip:'Il aime la musique.' },
+    { q:'מָה אֵין בְּמַדְרִיד?', ans:'יָם', tip:'Il n\'y a pas de mer.' },
+  ]
+},
+{
+  id:7, title:'Partie 7 — Expression', icon:'✏️', pts:4,
+  fr:'Rédigez un texte court sur vous-même',
+  type:'free',
+  prompts:[
+    'מִי אַתָּה/אַתְּ?',
+    'מֵאַיִן אַתָּה/אַתְּ?',
+    'אֵיפֹה אַתָּה/אַתְּ גָּר/גָּרָה?',
+    'אֵיפֹה אַתָּה/אַתְּ לוֹמֵד/לוֹמֶדֶת?',
+    'מָה אַתָּה/אַתְּ לוֹמֵד/לוֹמֶדֶת?',
+    'מָה אַתָּה/אַתְּ אוֹהֵב/אוֹהֶבֶת?',
+    'מָה אַתָּה/אַתְּ לֹא אוֹהֵב/אוֹהֶבֶת?',
+  ]
+}
+];
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+var partIdx = 0;
+var totalCorrect = 0;
+var totalErrors = 0;
+var partScores = {};
+var checkState = {}; // per-part state: 'first','retry','done'
+
+function totalPts(){
+  var t=0;
+  Object.keys(partScores).forEach(function(k){t+=partScores[k]});
+  return t;
+}
+
+// ─────────────────────────────────────────────
+// HOME
+// ─────────────────────────────────────────────
+function buildHome(){
+  var g=document.getElementById('home-grid');
+  g.innerHTML='';
+  PARTS.forEach(function(p,i){
+    var d=document.createElement('div');
+    d.className='home-card';
+    d.innerHTML='<div class="hc-icon">'+p.icon+'</div><div class="hc-title">'+p.title+'</div><div class="hc-pts">'+p.pts+' point'+(p.pts>1?'s':'')+'</div>';
+    d.onclick=function(){startFrom(i)};
+    g.appendChild(d);
+  });
+}
+
+function goHome(){
+  document.getElementById('home').style.display='block';
+  document.getElementById('exam').style.display='none';
+  document.getElementById('end').classList.remove('visible');
+  buildHome();
+}
+
+function startAll(){ startFrom(0); }
+function startFrom(idx){
+  partIdx=idx;
+  document.getElementById('home').style.display='none';
+  document.getElementById('end').classList.remove('visible');
+  document.getElementById('exam').style.display='block';
+  renderPart();
+}
+
+// ─────────────────────────────────────────────
+// RENDER PART
+// ─────────────────────────────────────────────
+function renderPart(){
+  var p=PARTS[partIdx];
+  var pct=Math.round(partIdx/PARTS.length*100);
+  document.getElementById('pfill').style.width=pct+'%';
+  document.getElementById('part-label').textContent=p.title+' ('+p.pts+' pts)';
+  document.getElementById('s-correct').textContent=totalCorrect;
+  document.getElementById('s-errors').textContent=totalErrors;
+  document.getElementById('s-pts').textContent=totalPts().toFixed(1);
+  document.getElementById('fb-global').className='fb';
+  document.getElementById('fb-global').style.display='none';
+  document.getElementById('btn-check').style.display='inline-block';
+  document.getElementById('btn-check').textContent='✓ Corriger (1ʳᵉ passe)';
+  document.getElementById('btn-next').style.display='none';
+  checkState[partIdx]='first';
+
+  var area=document.getElementById('part-area');
+  area.innerHTML='';
+
+  var html='<div class="card"><span class="stag">'+p.icon+' '+p.title+'</span>';
+  if(p.fr) html+='<div class="fr">'+p.fr+'</div>';
+  if(p.hint) html+='<div class="fr" style="background:#fff8e0;padding:6px 10px;border-radius:4px;margin:6px 0">💡 '+p.hint+'</div>';
+
+  if(p.type==='fill') html+=buildFill(p);
+  else if(p.type==='table') html+=buildTable(p);
+  else if(p.type==='numbers') html+=buildNumbers(p);
+  else if(p.type==='reading') html+=buildReading(p);
+  else if(p.type==='free') html+=buildFree(p);
+
+  html+='</div>';
+  area.innerHTML=html;
+}
+
+// ─────────────────────────────────────────────
+// BUILD TYPES
+// ─────────────────────────────────────────────
+function buildFill(p){
+  var html='';
+  p.items.forEach(function(it,i){
+    html+='<div class="inp-wrap" style="margin:10px 0">';
+    html+='<span class="heb-q" style="flex:1">';
+    html+=it.pre;
+    html+='<input type="text" class="heb-in" id="f-'+i+'-0" placeholder="___" style="width:120px" autocomplete="off">';
+    html+=it.suf||'';
+    if(it.blank2!==undefined){
+      html+='<input type="text" class="heb-in" id="f-'+i+'-1" placeholder="___" style="width:120px" autocomplete="off">';
+      html+=it.suf2||'';
+    }
+    html+='</span>';
+    html+='</div>';
+  });
+  return html;
+}
+
+function buildTable(p){
+  var html='<div style="overflow-x:auto"><table class="conj-table"><thead><tr>';
+  p.cols.forEach(function(c){ html+='<th>'+c+'</th>'; });
+  html+='</tr></thead><tbody>';
+  p.rows.forEach(function(row,ri){
+    html+='<tr>';
+    for(var ci=0;ci<p.cols.length;ci++){
+      if(row.fixed.indexOf(ci)>=0){
+        html+='<td style="background:#f5ead6;font-weight:600">'+(row.given[ci]||'')+'</td>';
+      } else {
+        html+='<td><input type="text" class="heb-in" id="t-'+ri+'-'+ci+'" placeholder="___" style="width:100%;min-width:90px" autocomplete="off"></td>';
+      }
+    }
+    html+='</tr>';
+  });
+  html+='</tbody></table></div>';
+  return html;
+}
+
+function buildNumbers(p){
+  var html='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px">';
+  p.items.forEach(function(it,i){
+    html+='<div class="inp-wrap"><span class="heb" style="font-size:20px;min-width:120px">'+it.heb+'</span>';
+    html+='<input type="text" class="heb-in" id="n-'+i+'" placeholder="?" style="width:70px;text-align:center;direction:ltr;font-size:20px" autocomplete="off">';
+    html+='</div>';
+  });
+  html+='</div>';
+  return html;
+}
+
+function buildReading(p){
+  var html='<div class="heb" style="background:var(--pd);padding:12px 16px;border-radius:6px;font-size:17px;line-height:2;margin-bottom:14px">'+p.text+'</div>';
+  p.items.forEach(function(it,i){
+    html+='<div style="margin:10px 0">';
+    html+='<div class="heb-q" style="font-size:16px;color:var(--inkl);margin-bottom:4px">'+(i+1)+'. '+it.q+'</div>';
+    html+='<input type="text" class="heb-in" id="r-'+i+'" placeholder="תשובה..." style="width:100%" autocomplete="off">';
+    html+='</div>';
+  });
+  return html;
+}
+
+function buildFree(p){
+  var html='<div style="margin-bottom:10px">';
+  p.prompts.forEach(function(q){
+    html+='<div class="heb-q" style="font-size:15px;color:var(--inkl)">• '+q+'</div>';
+  });
+  html+='</div>';
+  html+='<textarea class="heb-area" id="free-text" placeholder="כִּתְבוּ כָּאן..."></textarea>';
+  html+='<div class="fr" style="margin-top:6px">La correction de cette partie est manuelle — elle sera comptée si votre texte répond aux questions ci-dessus.</div>';
+  return html;
+}
+
+// ─────────────────────────────────────────────
+// CHECK
+// ─────────────────────────────────────────────
+function normalize(s){
+  // Remove nikud, trim, collapse spaces
+  return s.replace(/[\u05B0-\u05C7]/g,'').replace(/\s+/,' ').trim();
+}
+
+function checkStep(){
+  var p=PARTS[partIdx];
+  var state=checkState[partIdx];
+
+  if(p.type==='free'){
+    var t=document.getElementById('free-text').value.trim();
+    var awarded=t.length>30?p.pts:t.length>5?p.pts/2:0;
+    partScores[partIdx]=awarded;
+    totalCorrect+=(awarded===p.pts?1:0);
+    showFb('warn','✏️ Expression libre — '+awarded+' / '+p.pts+' pts attribués provisoirement. Révisez avec votre enseignant.e.',true);
+    return;
+  }
+
+  if(state==='first'){
+    doFirstCheck(p);
+  } else if(state==='retry'){
+    doRetryCheck(p);
+  }
+}
+
+function getInputs(p){
+  var inputs=[];
+  if(p.type==='fill'){
+    p.items.forEach(function(it,i){
+      var el=document.getElementById('f-'+i+'-0');
+      inputs.push({el:el,ans:it.ans,tip:it.tip||''});
+      if(it.blank2!==undefined){
+        var el2=document.getElementById('f-'+i+'-1');
+        inputs.push({el:el2,ans:it.ans2,tip:it.tip||''});
+      }
+    });
+  } else if(p.type==='table'){
+    p.rows.forEach(function(row,ri){
+      for(var ci=0;ci<p.cols.length;ci++){
+        if(row.fixed.indexOf(ci)<0 && row.ans && row.ans[ci]!==undefined){
+          var el=document.getElementById('t-'+ri+'-'+ci);
+          if(el) inputs.push({el:el,ans:row.ans[ci],tip:''});
+        }
+      }
+    });
+  } else if(p.type==='numbers'){
+    p.items.forEach(function(it,i){
+      var el=document.getElementById('n-'+i);
+      inputs.push({el:el,ans:it.ans,tip:it.heb});
+    });
+  } else if(p.type==='reading'){
+    p.items.forEach(function(it,i){
+      var el=document.getElementById('r-'+i);
+      inputs.push({el:el,ans:it.ans,tip:it.tip||''});
+    });
+  }
+  return inputs;
+}
+
+function doFirstCheck(p){
+  var inputs=getInputs(p);
+  var wrong=0, correct=0;
+  inputs.forEach(function(inp){
+    if(!inp.el) return;
+    inp.el.disabled=false;
+    var val=normalize(inp.el.value);
+    var expected=normalize(inp.ans);
+    if(val===expected || val===inp.ans.trim()){
+      inp.el.classList.remove('hi-wrong','hi-final-wrong','retry-ok');
+      inp.el.classList.add('hi-correct');
+      inp.el.disabled=true;
+      correct++;
+    } else {
+      inp.el.classList.remove('hi-correct','hi-final-wrong','retry-ok');
+      inp.el.classList.add('hi-wrong');
+      wrong++;
+    }
+  });
+
+  if(wrong===0){
+    // All correct first time
+    partScores[partIdx]=p.pts;
+    totalCorrect+=inputs.length;
+    showFb('ok','✓ Parfait ! Tous les champs sont corrects. '+p.pts+' / '+p.pts+' pts',true);
+  } else {
+    checkState[partIdx]='retry';
+    document.getElementById('btn-check').textContent='✓ Corriger (2ᵉ passe)';
+    showFb('warn','⚠ '+wrong+' réponse'+(wrong>1?'s':'')+' incorrecte'+(wrong>1?'s':'')+' (surlignée'+(wrong>1?'s':'')+' en jaune). Corrigez et validez à nouveau.',false);
+  }
+}
+
+function doRetryCheck(p){
+  var inputs=getInputs(p);
+  var wrong2=0, correct2=0, alreadyOk=0;
+  inputs.forEach(function(inp){
+    if(!inp.el) return;
+    if(inp.el.disabled){ alreadyOk++; return; }
+    var val=normalize(inp.el.value);
+    var expected=normalize(inp.ans);
+    if(val===expected || val===inp.ans.trim()){
+      inp.el.classList.remove('hi-wrong','hi-final-wrong','retry-ok');
+      inp.el.classList.add('retry-ok');
+      inp.el.disabled=true;
+      correct2++;
+    } else {
+      inp.el.classList.remove('hi-wrong','retry-ok');
+      inp.el.classList.add('hi-final-wrong');
+      inp.el.disabled=true;
+      // Show answer hint
+      inp.el.placeholder=inp.ans;
+      wrong2++;
+    }
+  });
+
+  // Scoring: correct first pass = full, correct second pass = half, wrong = 0
+  var total=inputs.length;
+  var firstOk=alreadyOk;
+  var score=(firstOk*(p.pts/total))+(correct2*(p.pts/total*0.5));
+  partScores[partIdx]=Math.round(score*10)/10;
+  totalErrors+=wrong2;
+  totalCorrect+=correct2;
+
+  checkState[partIdx]='done';
+  document.getElementById('btn-check').style.display='none';
+
+  if(wrong2===0){
+    showFb('ok','✓ Tout corrigé ! Score: '+partScores[partIdx].toFixed(1)+' / '+p.pts+' pts',true);
+  } else {
+    var tips='';
+    inputs.forEach(function(inp){
+      if(inp.el && inp.el.classList.contains('hi-final-wrong')){
+        tips+='<br>→ Réponse attendue : <strong style="font-family:\'Noto Serif Hebrew\',serif">'+inp.ans+'</strong>'+(inp.tip?' ('+inp.tip+')':'');
+      }
+    });
+    showFb('err','✗ '+wrong2+' erreur'+(wrong2>1?'s':'')+' finale'+(wrong2>1?'s':'')+'. Score: '+partScores[partIdx].toFixed(1)+' / '+p.pts+' pts'+tips,true);
+  }
+  updateScoreBar();
+}
+
+function showFb(type,msg,showNext){
+  var fb=document.getElementById('fb-global');
+  fb.className='fb '+type;
+  fb.innerHTML=msg;
+  fb.style.display='block';
+  if(showNext){
+    document.getElementById('btn-check').style.display='none';
+    if(partIdx<PARTS.length-1){
+      document.getElementById('btn-next').style.display='inline-block';
+      document.getElementById('btn-next').textContent='Partie suivante →';
+    } else {
+      document.getElementById('btn-next').style.display='inline-block';
+      document.getElementById('btn-next').textContent='Voir les résultats ✓';
+    }
+  }
+}
+
+function updateScoreBar(){
+  document.getElementById('s-correct').textContent=totalCorrect;
+  document.getElementById('s-errors').textContent=totalErrors;
+  document.getElementById('s-pts').textContent=totalPts().toFixed(1);
+}
+
+function nextPart(){
+  if(partIdx>=PARTS.length-1){ showEnd(); return; }
+  partIdx++;
+  renderPart();
+}
+
+// ─────────────────────────────────────────────
+// END SCREEN
+// ─────────────────────────────────────────────
+function showEnd(){
+  document.getElementById('exam').style.display='none';
+  var es=document.getElementById('end');
+  es.classList.add('visible');
+  var pts=totalPts();
+  var max=0; PARTS.forEach(function(p){max+=p.pts});
+  var pct=Math.round(pts/max*100);
+  document.getElementById('end-icon').textContent=pct>=80?'🏆':pct>=60?'📜':'📝';
+  document.getElementById('end-msg').textContent=pct>=80?'מְצֻיָּן ! Excellent !':pct>=60?'טוֹב ! Bien !':'הַמְשֵׁךְ לִלְמֹד ! Continue !';
+  document.getElementById('end-sub').textContent='Score : '+pts.toFixed(1)+' / '+max+' — '+pct+'%';
+  var grid=document.getElementById('score-detail');
+  grid.innerHTML='';
+  PARTS.forEach(function(p){
+    var got=partScores[p.id-1]!==undefined?partScores[p.id-1].toFixed(1):'—';
+    var d=document.createElement('div');
+    d.className='score-row';
+    d.innerHTML=p.icon+' '+p.title.replace(/Partie \d+ — /,'')+' : <strong>'+got+' / '+p.pts+'</strong>';
+    grid.appendChild(d);
+  });
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+buildHome();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js')
+      .then(function(reg) { console.log('SW registered:', reg.scope); })
+      .catch(function(err) { console.log('SW error:', err); });
+  });
+}
+</script>
+</body>
+</html>
